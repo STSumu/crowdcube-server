@@ -26,6 +26,7 @@ async function run() {
     await client.connect();
     const database = client.db("crowdcubeDb");
     const campaignCollection = database.collection("campaignCollection");
+    const categoryCollection = database.collection("categoryCollection");
     const userCollection = database.collection("UserCollection");
 
     console.log("Connected to MongoDB!");
@@ -33,6 +34,14 @@ async function run() {
     
     app.get("/campaigns", async (req, res) => {
       const campaigns = await campaignCollection.find().toArray();
+      res.send(campaigns);
+    });
+    app.get("/categories", async (req, res) => {
+      const categories = await categoryCollection.find().toArray();
+      res.send(categories);
+    });
+    app.get("/runningCampaigns", async (req, res) => {
+      const campaigns = await campaignCollection.find({deadline: { $gt: new Date() }}).limit(6).toArray();
       res.send(campaigns);
     });
     app.get("/campaigns/:campId",async(req,res)=>{
