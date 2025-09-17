@@ -37,32 +37,45 @@ async function run() {
       const campaigns = await campaignCollection.find().toArray();
       res.send(campaigns);
     });
+
+    app.get("/myCampaign/:userEmail", async (req, res) => {
+      const email=req.params.userEmail;
+      const campaigns = await campaignCollection.find({userEmail:email}).toArray();
+      res.send(campaigns);
+    });
+
     app.get("/categories", async (req, res) => {
       const categories = await categoryCollection.find().toArray();
       res.send(categories);
     });
+
     app.get("/types", async (req, res) => {
       const categories= await categoryCollection.find().toArray();
       const campaigns=await campaignCollection.find().toArray();
       const types=[...new Set(categories.map((c)=>c.title)),...new Set(campaigns.map((cat)=>cat.type))]
       res.send(types);
     });
+
     app.get("/runningCampaigns", async (req, res) => {
       const campaigns = await campaignCollection.find({deadline: { $gt: new Date() }}).limit(6).toArray();
       res.send(campaigns);
     });
+
     app.post("/campaign",async(req,res)=>{
       const campaign=req.body;
       const result=await campaignCollection.insertOne(campaign);
       console.log(result);
       res.send(result);
     })
+
+
     app.get("/campaigns/:campId",async(req,res)=>{
       const {campId}=req.params;
       const id=new ObjectId(campId);
       const campaign=await campaignCollection.findOne({_id : id});
       res.send(campaign);
     });
+
     app.post("/donation",async(req,res)=>{
       const donation=req.body;
       const {campaignId,amount}=donation;
@@ -74,6 +87,7 @@ async function run() {
         }
       }
     })
+    
     app.patch("/campaign/:campId",async(req,res)=>{
       const {campId}=req.params;
       const donationAmount=req.body;
