@@ -28,6 +28,7 @@ async function run() {
     const campaignCollection = database.collection("campaignCollection");
     const categoryCollection = database.collection("categoryCollection");
     const userCollection = database.collection("UserCollection");
+    const donationCollection=database.collection("donationCollection");
 
     console.log("Connected to MongoDB!");
 
@@ -61,6 +62,23 @@ async function run() {
       const id=new ObjectId(campId);
       const campaign=await campaignCollection.findOne({_id : id});
       res.send(campaign);
+    });
+    app.post("/donation",async(req,res)=>{
+      const donation=req.body;
+      const {campaignId,amount}=donation;
+      const result=await donationCollection.insertOne(donation);
+      if(result.insertedId){
+        const res2=await campaignCollection.updateOne({_id:new ObjectId(campaignId)},{$inc:{raised:Number(amount)}})
+        if(res2.acknowledged){
+          res.send(result);
+        }
+      }
+    })
+    app.patch("/campaign/:campId",async(req,res)=>{
+      const {campId}=req.params;
+      const donationAmount=req.body;
+      const result=await campaignCollection.updateOne({_id:new ObjectId(campId)},{$inc:{raised:donationAmount}});
+      res.send(result);
     })
 
   } 
