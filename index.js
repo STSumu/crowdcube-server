@@ -94,7 +94,12 @@ async function run() {
       const result=await campaignCollection.updateOne({_id:new ObjectId(campId)},{$inc:{raised:donationAmount}});
       res.send(result);
     })
-
+    
+    app.delete("/campaign/:campId",async(req,res)=>{
+      const {campId}=req.params;
+      const result=await campaignCollection.deleteOne({_id:new ObjectId(campId)})
+      res.send(result);
+    })
   } 
   catch (error) {
     console.error("DB Connection Error:", error);
