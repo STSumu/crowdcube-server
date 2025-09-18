@@ -1,13 +1,12 @@
-const express=require('express');
-const cors=require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const port=process.env.PORT || 5000;
-const app=express();
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const port = process.env.PORT || 5000;
+const app = express();
+require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
-
 
 const username = process.env.DB_USER;
 const pass = process.env.DB_PASS;
@@ -28,19 +27,20 @@ async function run() {
     const campaignCollection = database.collection("campaignCollection");
     const categoryCollection = database.collection("categoryCollection");
     const userCollection = database.collection("UserCollection");
-    const donationCollection=database.collection("donationCollection");
+    const donationCollection = database.collection("donationCollection");
 
     console.log("Connected to MongoDB!");
 
-    
     app.get("/campaigns", async (req, res) => {
       const campaigns = await campaignCollection.find().toArray();
       res.send(campaigns);
     });
 
     app.get("/myCampaign/:userEmail", async (req, res) => {
-      const email=req.params.userEmail;
-      const campaigns = await campaignCollection.find({userEmail:email}).toArray();
+      const email = req.params.userEmail;
+      const campaigns = await campaignCollection
+        .find({ userEmail: email })
+        .toArray();
       res.send(campaigns);
     });
 
@@ -50,66 +50,104 @@ async function run() {
     });
 
     app.get("/types", async (req, res) => {
-      const categories= await categoryCollection.find().toArray();
-      const campaigns=await campaignCollection.find().toArray();
-      const types=[...new Set(categories.map((c)=>c.title)),...new Set(campaigns.map((cat)=>cat.type))]
+      const categories = await categoryCollection.find().toArray();
+      const campaigns = await campaignCollection.find().toArray();
+      const types = [
+        ...new Set(categories.map((c) => c.title)),
+        ...new Set(campaigns.map((cat) => cat.type)),
+      ];
       res.send(types);
     });
 
     app.get("/runningCampaigns", async (req, res) => {
-      const campaigns = await campaignCollection.find({deadline: { $gt: new Date() }}).limit(6).toArray();
+      const campaigns = await campaignCollection
+        .find({ deadline: { $gt: new Date() } })
+        .limit(6)
+        .toArray();
       res.send(campaigns);
     });
 
-    app.post("/campaign",async(req,res)=>{
-      const campaign=req.body;
-      const result=await campaignCollection.insertOne(campaign);
+    app.post("/campaign", async (req, res) => {
+      const campaign = req.body;
+      const result = await campaignCollection.insertOne(campaign);
       console.log(result);
       res.send(result);
-    })
+    });
 
-
-    app.get("/campaigns/:campId",async(req,res)=>{
-      const {campId}=req.params;
-      const id=new ObjectId(campId);
-      const campaign=await campaignCollection.findOne({_id : id});
+    app.get("/campaigns/:campId", async (req, res) => {
+      const { campId } = req.params;
+      const id = new ObjectId(campId);
+      const campaign = await campaignCollection.findOne({ _id: id });
       res.send(campaign);
     });
 
-    app.post("/donation",async(req,res)=>{
-      const donation=req.body;
-      const {campaignId,amount}=donation;
-      const result=await donationCollection.insertOne(donation);
-      if(result.insertedId){
-        const res2=await campaignCollection.updateOne({_id:new ObjectId(campaignId)},{$inc:{raised:Number(amount)}})
-        if(res2.acknowledged){
+    app.post("/donation", async (req, res) => {
+      const donation = req.body;
+      const { campaignId, amount } = donation;
+      const result = await donationCollection.insertOne(donation);
+      if (result.insertedId) {
+        const res2 = await campaignCollection.updateOne(
+          { _id: new ObjectId(campaignId) },
+          { $inc: { raised: Number(amount) } }
+        );
+        if (res2.acknowledged) {
           res.send(result);
         }
       }
-    })
-    
-    app.patch("/campaign/:campId",async(req,res)=>{
-      const {campId}=req.params;
-      const donationAmount=req.body;
-      const result=await campaignCollection.updateOne({_id:new ObjectId(campId)},{$inc:{raised:donationAmount}});
+    });
+
+    app.patch("/campaign/:campId", async (req, res) => {
+      const { campId } = req.params;
+      const donationAmount = req.body;
+      const filter = { _id: new ObjectId(campId) };
+      const options = { upsert: true };
+      const result = await campaignCollection.updateOne(
+        filter,
+        { $inc: { raised: donationAmount } },
+        options
+      );
       res.send(result);
-    })
-    
-    app.delete("/campaign/:campId",async(req,res)=>{
-      const {campId}=req.params;
-      const result=await campaignCollection.deleteOne({_id:new ObjectId(campId)})
+    });
+
+    app.delete("/campaign/:campId", async (req, res) => {
+      const { campId } = req.params;
+      const result = await campaignCollection.deleteOne({
+        _id: new ObjectId(campId),
+      });
       res.send(result);
-    })
-  } 
-  catch (error) {
+    });
+    app.put("/updateCampaign/:id", async (req, res) => {
+      const loadedCampaign = req.body;
+      const options = { upsert: true };
+      const id=req.params;
+const filter={_id : new ObjectId(id)};
+      const updatedCampaign = {
+        $set: {
+          title: loadedCampaign.title,
+          deadline: loadedCampaign.deadline,
+          description: loadedCampaign.description,
+          type: loadedCampaign.type,
+          minDonation: loadedCampaign.minDonation,
+          goal: loadedCampaign.goal,
+          image: loadedCampaign.image,
+        },
+      };
+      const result = await campaignCollection.updateOne(
+        filter,
+        updatedCampaign,
+        options
+      );
+      res.send(result);
+    });
+  } catch (error) {
     console.error("DB Connection Error:", error);
   }
 }
 
 run().catch(console.dir);
 
-app.get('/', (req, res) => {
-  res.send('crowdcube server running');
+app.get("/", (req, res) => {
+  res.send("crowdcube server running");
 });
 
 app.listen(port, () => {
