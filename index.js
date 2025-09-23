@@ -70,7 +70,6 @@ async function run() {
     app.post("/campaign", async (req, res) => {
       const campaign = req.body;
       const result = await campaignCollection.insertOne(campaign);
-      console.log(result);
       res.send(result);
     });
 
@@ -146,6 +145,24 @@ const filter={_id : new ObjectId(id)};
       const query={userEmail:email};
       const result=await donationCollection.find(query).toArray();
       res.send(result);
+    });
+    app.post('/users',async(req,res)=>{
+      const date=new Date();
+      const user=req.body;
+      const newUser={...user,createdAt:date};
+      const dbUser = await userCollection.findOne({ email: user.email });
+    if (!dbUser) {
+      const result = await userCollection.insertOne(newUser);
+      res.send(result);
+    } else {
+      res.send({ insertedId:true, user: dbUser });
+    }
+    })
+    app.get('/users/:emailId',async(req,res)=>{
+      const {emailId}=req.params;
+      const query={email:emailId};
+      const user=await userCollection.findOne(query);
+      res.send(user);
     })
   } catch (error) {
     console.error("DB Connection Error:", error);
