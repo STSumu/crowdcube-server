@@ -35,6 +35,10 @@ async function run() {
       const campaigns = await campaignCollection.find().toArray();
       res.send(campaigns);
     });
+    app.get("/sortedCampaigns", async (req, res) => {
+      const campaigns = await campaignCollection.find().sort({minDonation:1}).toArray();
+      res.send(campaigns);
+    });
 
     app.get("/myCampaign/:userEmail", async (req, res) => {
       const email = req.params.userEmail;
