@@ -1,9 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 const app = express();
-require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
@@ -22,14 +22,14 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const database = client.db("crowdcubeDb");
     const campaignCollection = database.collection("campaignCollection");
     const categoryCollection = database.collection("categoryCollection");
     const userCollection = database.collection("UserCollection");
     const donationCollection = database.collection("donationCollection");
 
-    console.log("Connected to MongoDB!");
+    // console.log("Connected to MongoDB!");
 
     app.get("/campaigns", async (req, res) => {
       const campaigns = await campaignCollection.find().toArray();
